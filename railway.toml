@@ -1,9 +1,0 @@
-[build]
-builder = "NIXPACKS"
-buildCommand = "go build -o zrp-wallet-service ."
-
-[deploy]
-startCommand = "./zrp-wallet-service"
-healthcheckPath = "/health"
-healthcheckTimeout = 30
-restartPolicyType = "ON_FAILURE"
