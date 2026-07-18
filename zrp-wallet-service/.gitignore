@@ -1,0 +1,5 @@
+/zrp-wallet-service
+*.exe
+*.test
+*.out
+.env

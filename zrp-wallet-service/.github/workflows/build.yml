@@ -1,0 +1,38 @@
+name: Build and Resolve Dependencies
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Fetch SDK dependency and tidy
+        run: |
+          go get github.com/LeonidasSpart/zrp-wallet-sdk/coins/solana@main
+          go mod tidy
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Commit updated go.mod / go.sum
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+          git add go.mod go.sum
+          git diff --staged --quiet || git commit -m "Resolve SDK dependency (automated)"
+          git push
