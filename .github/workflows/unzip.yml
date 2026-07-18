@@ -1,0 +1,29 @@
+name: Unzip Project
+
+permissions:
+  contents: write
+
+on:
+  push:
+    paths:
+      - 'zrp-wallet-service.zip'
+  workflow_dispatch:
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract ZIP
+        run: |
+          unzip -o zrp-wallet-service.zip
+          rm zrp-wallet-service.zip
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+          git add .
+          git diff --staged --quiet || git commit -m "Extract SDK files"
+          git push
