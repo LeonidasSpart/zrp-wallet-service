@@ -14,7 +14,7 @@ jobs:
 
       - name: Flatten directory
         run: |
-          if [ -d "zrp-wallet-service-main" ]; then
+          if [ -d "zrp-wallet-service" ]; then
             shopt -s dotglob
             mv zrp-wallet-service-main/* .
             rmdir zrp-wallet-service-main
