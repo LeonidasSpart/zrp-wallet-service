@@ -1,0 +1,38 @@
+name: Fix go.sum
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  fix-gosum:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Run go mod tidy
+        run: go mod tidy
+
+      - name: Check if go.sum changed
+        id: check
+        run: |
+          if git diff --quiet go.sum; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push go.sum
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add go.mod go.sum
+          git commit -m "fix: auto-update go.sum via GitHub Actions"
+          git push
