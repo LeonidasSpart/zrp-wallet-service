@@ -5,6 +5,11 @@ permissions:
 
 on:
   workflow_dispatch:
+    inputs:
+      source_dir:
+        description: 'Name of the subdirectory to flatten (default: auto-detect)'
+        required: false
+        default: ''
 
 jobs:
   flatten:
@@ -12,14 +17,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Detect source directory
+        id: detect
+        run: |
+          if [ -n "${{ github.event.inputs.source_dir }}" ]; then
+            SOURCE="${{ github.event.inputs.source_dir }}"
+          elif [ -d "zrp-wallet-service-main" ]; then
+            SOURCE="zrp-wallet-service-main"
+          else
+            # Find the first non-.git subdirectory (if exactly one exists)
+            DIRS=$(find . -maxdepth 1 -type d ! -name "." ! -name ".git" -printf "%f\n")
+            if [ $(echo "$DIRS" | wc -l) -eq 1 ]; then
+              SOURCE="$DIRS"
+            else
+              echo "No suitable source directory found. Exiting."
+              exit 1
+            fi
+          fi
+          echo "source=$SOURCE" >> $GITHUB_OUTPUT
+
       - name: Flatten directory
         run: |
-          if [ -d "zrp-wallet-service" ]; then
+          SOURCE="${{ steps.detect.outputs.source }}"
+          if [ -d "$SOURCE" ]; then
             shopt -s dotglob
-            mv zrp-wallet-service-main/* .
-            rmdir zrp-wallet-service-main
+            # Move all contents (including hidden) to root, but avoid overwriting
+            # Use mv -n to not overwrite existing files (or -f to force)
+            mv -n "$SOURCE"/* . 2>/dev/null || true
+            # Remove empty source directory
+            rmdir "$SOURCE" 2>/dev/null || true
           else
-            echo "zrp-wallet-service-main not found, nothing to flatten"
+            echo "Source directory not found; nothing to flatten."
             exit 1
           fi
 
